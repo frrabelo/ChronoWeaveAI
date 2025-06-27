@@ -1,0 +1,45 @@
+<!-- src/components/TimelineEvent.astro -->
+---
+// Este componente representa um único evento na linha do tempo.
+const { event, isRight } = Astro.props;
+const { event_date, event_title, description, category, image_query } = event;
+
+// Usa o Unsplash Source para buscar uma imagem dinamicamente baseada na query da IA.
+// Isso torna a linha do tempo visualmente rica sem precisar de gestão de assets.
+const imageUrl = `https://source.unsplash.com/800x600/?${encodeURIComponent(image_query)}`;
+
+// Classes CSS condicionais para posicionar o evento à esquerda ou à direita.
+const alignmentClass = isRight ? "flex-row-reverse" : "";
+const textAlignmentClass = isRight ? "text-left" : "text-right";
+const contentAlignmentClass = isRight ? "pl-10" : "pr-10";
+---
+
+<div class={`mb-8 flex justify-between items-center w-full ${alignmentClass}`}>
+  <div class="order-1 w-5/12"></div>
+  <div class={`z-20 flex items-center order-1 bg-gray-800 shadow-xl w-12 h-12 rounded-full`}>
+    <h1 class="mx-auto font-semibold text-lg text-white">{category.slice(0, 1)}</h1>
+  </div>
+  <div class={`order-1 bg-gray-800 border-2 border-gray-700 rounded-lg shadow-xl w-5/12 px-6 py-4 ${contentAlignmentClass}`}>
+    <time class="mb-1 text-sm font-semibold text-pink-400">{event_date}</time>
+    <h3 class="mb-3 font-bold text-white text-xl">{event_title}</h3>
+    
+    <img src={imageUrl} alt={`Imagem representando ${event_title}`} class="rounded-lg mb-4 w-full h-auto object-cover" loading="lazy" 
+    onerror="this.onerror=null;this.src='https://placehold.co/800x600/374151/9ca3af?text=Imagem+Indisponível';"/>
+
+    <!-- Renderiza a descrição (rich_text) como HTML -->
+    <div class="text-sm leading-snug tracking-wide text-gray-300 text-opacity-100" set:html={description}>
+    </div>
+  </div>
+</div>
+```html
+<!-- src/components/LoadingSpinner.astro -->
+<div
+  class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
+  role="status"
+>
+  <span
+    class="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]"
+  >
+    Carregando...
+  </span>
+</div>
