@@ -1,0 +1,43 @@
+// astro.config.mjs
+import { defineConfig } from 'astro/config';
+import tailwind from "@astrojs/tailwind";
+
+// https://astro.build/config
+export default defineConfig({
+  integrations: [tailwind()],
+  // Configuração para o deploy na Vercel
+  output: 'server', // ou 'hybrid' se tiver páginas estáticas e dinâmicas
+  adapter: vercel(),
+});
+```javascript
+// tailwind.config.mjs
+/** @type {import('tailwindcss').Config} */
+export default {
+	content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}'],
+	theme: {
+		extend: {},
+	},
+	plugins: [],
+}
+```json
+// package.json
+{
+  "name": "chronoweave-ai",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/tailwind": "^5.1.0",
+    "@astrojs/vercel": "^7.7.2",
+    "astro": "^4.10.2",
+    "node-fetch": "^3.3.2",
+    "storyblok-js-client": "^6.0.0",
+    "tailwindcss": "^3.4.4"
+  }
+}
