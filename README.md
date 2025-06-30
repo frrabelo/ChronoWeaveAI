@@ -1,6 +1,6 @@
-*This is a submission for the [Storyblok Challenge](https://dev.to/challenges/storyblok)*
+*This is a submission for the [Storyblok Challenge](https://dev.to/phranciscorabello/chronoweave-ai-ai-architected-historical-content-for-storyblok-3klc)*
 
-- **Link para o Artigo no DEV.to:** `[INSIRA O LINK DO SEU ARTIGO AQUI]`
+ **Link to Article on DEV.to** [https://dev.to/phranciscorabello/chronoweave-ai-ai-architected-historical-content-for-storyblok-3klc]
 
 ## What I Built
 # ChronoWeave AI: AI-Architected Historical Content for Storyblok
