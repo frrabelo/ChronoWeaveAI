@@ -1,5 +1,6 @@
 {
   "name": "ChronoWeave AI",
-  "description": "An AI-powered timeline generator. Enter a topic and get a detailed historical timeline, visually presented in Portuguese.",
-  "requestFramePermissions": []
+  "description": "An AI-powered timeline generator. Enter a topic and get a detailed historical timeline, visually presented.",
+  "requestFramePermissions": [],
+  "prompt": ""
 }

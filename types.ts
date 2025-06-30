@@ -1,26 +1,15 @@
-
-export interface TimelineEventData {
-  component: 'Timeline_Event';
+export interface TimelineEvent {
   date: string;
   title: string;
   description: string;
-  category: 'Invenção' | 'Conflito' | 'Descoberta' | 'Arte' | string;
+  category: 'Invention' | 'Conflict' | 'Discovery' | 'Art' | string;
   image_query: string;
+  // Client-side populated
+  imageBase64?: string;
 }
 
-export interface TimelineContent {
-  component: 'Timeline_Page';
+export interface TimelineData {
   title: string;
   summary: string;
-  events_container: TimelineEventData[];
-}
-
-export interface TimelineStory {
-  name: string;
-  slug: string;
-  content: TimelineContent;
-}
-
-export interface TimelineResponse {
-  story: TimelineStory;
+  events: TimelineEvent[];
 }

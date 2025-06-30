@@ -1,6 +1,5 @@
-
 import { GoogleGenAI } from "@google/genai";
-import { TimelineResponse } from '../types';
+import { TimelineData } from '../types';
 
 if (!process.env.API_KEY) {
   throw new Error("API_KEY environment variable not set");
@@ -8,57 +7,46 @@ if (!process.env.API_KEY) {
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-const slugify = (text: string): string => {
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-');
+const languageMap: { [key: string]: string } = {
+  en: 'English',
+  es: 'Spanish',
+  pt: 'Brazilian Portuguese',
 };
 
-const getMasterPrompt = (topic: string, slug: string): string => {
+const getMasterPrompt = (topic: string, lang: string): string => {
+  const languageName = languageMap[lang] || 'English';
   return `
-Você é um historiador especialista e um arquiteto de dados JSON. O seu único propósito é gerar uma linha do tempo histórica sobre um tópico fornecido pelo usuário e produzi-la como um único objeto JSON minificado, sem nenhum texto ao redor.
+You are an expert historian and a JSON data architect. Your sole purpose is to generate a historical timeline about a user-provided topic and output it as a single minified JSON object, with no surrounding text.
 
-O tópico do usuário é: "${topic}".
+The user's topic is: "${topic}".
+The response language MUST be ${languageName}.
 
-A sua saída JSON DEVE estar em conformidade com esta estrutura exata, que mapeia para componentes de um Headless CMS chamado Storyblok:
+Your JSON output MUST conform to this exact structure:
 {
-  "story": {
-    "name": "Linha do Tempo: ${topic}",
-    "slug": "timeline-${slug}",
-    "content": {
-      "component": "Timeline_Page",
-      "title": "A História de ${topic}",
-      "summary": "Um resumo gerado por IA sobre a história do tópico, com cerca de 50-70 palavras.",
-      "events_container": [
-        {
-            "component": "Timeline_Event",
-            "date": "Uma data precisa para o evento (e.g., '1826', 'c. 300 a.C.', '7 de Setembro de 1927')",
-            "title": "Um título conciso e impactante para o evento.",
-            "description": "Uma descrição detalhada do evento e seu significado. Pelo menos 2-3 frases.",
-            "category": "Uma das seguintes: 'Invenção', 'Conflito', 'Descoberta', 'Arte'",
-            "image_query": "Uma frase de 3-5 palavras para uma API de busca de imagens (ex: 'ancient printing press', 'tyrannosaurus rex fossil')."
-        }
-      ]
+  "title": "A ${languageName} title for the timeline of ${topic}",
+  "summary": "An AI-generated summary in ${languageName} about the topic's history, around 50-70 words.",
+  "events": [
+    {
+      "date": "A precise date for the event (e.g., '1826', 'c. 300 BC', '7 September 1927')",
+      "title": "A concise, impactful title for the event in ${languageName}.",
+      "description": "A detailed description of the event and its significance in ${languageName}. At least 2-3 sentences.",
+      "category": "One of the following English words: 'Invention', 'Conflict', 'Discovery', 'Art'",
+      "image_query": "A 3-5 word phrase for an image search API (e.g., 'ancient printing press', 'tyrannosaurus rex fossil'). This query must be in English."
     }
-  }
+  ]
 }
 
-Regras para a geração:
-1.  Gere entre 7 e 12 objetos de evento dentro do array 'events_container'.
-2.  Para cada evento, o campo 'description' deve ser detalhado, informativo e com pelo menos 2-3 frases.
-3.  O campo 'category' deve ser uma das seguintes opções: "Invenção", "Conflito", "Descoberta", "Arte".
-4.  O campo 'image_query' deve ser uma frase curta e descritiva de 3-5 palavras, ideal para uma API de busca de imagens (ex: "antiga prensa de impressão", "fóssil de tiranossauro rex").
-5.  Não produza nada além do objeto JSON. Responda apenas com o JSON.
+Rules for generation:
+1.  Generate between 7 and 12 event objects within the 'events' array.
+2.  All text values ('title', 'summary', 'events.title', 'events.description') MUST be in ${languageName}.
+3.  The 'category' value MUST be one of the four specified English words.
+4.  The 'image_query' MUST be in English.
+5.  Do not output anything other than the single, minified JSON object.
 `;
 };
 
-export const generateTimeline = async (topic: string): Promise<TimelineResponse> => {
-  const slug = slugify(topic);
-  const prompt = getMasterPrompt(topic, slug);
+export const generateTimelineText = async (topic: string, language: string): Promise<TimelineData> => {
+  const prompt = getMasterPrompt(topic, language);
 
   try {
     const response = await ai.models.generateContent({
@@ -72,26 +60,45 @@ export const generateTimeline = async (topic: string): Promise<TimelineResponse>
     
     let jsonStr = response.text.trim();
 
-    // Clean potential markdown fences
     const fenceRegex = /^```(\w*)?\s*\n?(.*?)\n?\s*```$/s;
     const match = jsonStr.match(fenceRegex);
     if (match && match[2]) {
       jsonStr = match[2].trim();
     }
     
-    const parsedData = JSON.parse(jsonStr) as TimelineResponse;
+    const parsedData = JSON.parse(jsonStr) as TimelineData;
 
-    // Basic validation
-    if (!parsedData.story || !parsedData.story.content || !parsedData.story.content.events_container) {
-      throw new Error("A resposta da IA não possui a estrutura esperada.");
+    if (!parsedData.title || !parsedData.summary || !parsedData.events) {
+      throw new Error("AI response is missing expected structure.");
     }
 
     return parsedData;
   } catch (error) {
-    console.error("Erro ao gerar linha do tempo:", error);
+    console.error("Error generating timeline text:", error);
     if (error instanceof Error) {
-        throw new Error(`Falha na comunicação com a IA: ${error.message}`);
+        throw new Error(`Failed to communicate with AI: ${error.message}`);
     }
-    throw new Error("Ocorreu um erro desconhecido ao gerar a linha do tempo.");
+    throw new Error("An unknown error occurred while generating the timeline.");
   }
+};
+
+export const generateImage = async (imageQuery: string): Promise<string> => {
+    try {
+        const fullPrompt = `Simple oil painting in the style of Claude Monet of ${imageQuery}.`;
+        const response = await ai.models.generateImages({
+            model: 'imagen-3.0-generate-002',
+            prompt: fullPrompt,
+            config: { numberOfImages: 1, outputMimeType: 'image/png' },
+        });
+
+        if (!response.generatedImages || response.generatedImages.length === 0) {
+            throw new Error("No image was generated.");
+        }
+
+        const base64ImageBytes: string = response.generatedImages[0].image.imageBytes;
+        return base64ImageBytes;
+    } catch (error) {
+        console.error(`Error generating image for query "${imageQuery}":`, error);
+        throw new Error(`Failed to generate image.`);
+    }
 };
